@@ -21,8 +21,23 @@ names_lower = meta["Name"].fillna("").str.replace(r"[™®©]", "", regex=True).
 app = FastAPI(title="GameRec")
 
 
+def normalize_query(q):
+    return (q or "").replace("™", "").replace("®", "").replace("©", "").strip().lower()
+
+
+def suggest(query, n=8):
+    query = normalize_query(query)
+    if len(query) < 2:
+        return []
+    found = meta[names_lower.str.contains(query, regex=False)].copy()
+    found["starts"] = names_lower[found.index].str.startswith(query)
+    # сначала названия, начинающиеся с запроса, внутри группы по числу отзывов
+    found = found.sort_values(["starts", "reviews_total"], ascending=False)
+    return found["Name"].drop_duplicates().head(n).tolist()
+
+
 def recommend(query, max_price=1e9, min_year=0, k=10):
-    query = (query or "").replace("™", "").replace("®", "").replace("©", "").strip().lower()
+    query = normalize_query(query)
     if not query:
         return {"message": "Введите название игры.", "results": []}
     found = meta[names_lower.str.contains(query, regex=False)]
@@ -57,6 +72,11 @@ def index():
 def api_recommend(q: str = "", max_price: float = 1e9, min_year: int = 0,
                   k: int = Query(10, ge=5, le=20)):
     return JSONResponse(recommend(q, max_price, min_year, k))
+
+
+@app.get("/api/suggest")
+def api_suggest(q: str = ""):
+    return suggest(q)
 
 
 @app.get("/healthz")

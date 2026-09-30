@@ -23,7 +23,8 @@
 <h1>GameRec</h1>
 <p>Похожие игры Steam (content-based item2item).</p>
 <form id="f">
-  <label>Название игры <input id="q" placeholder="Hades" required></label>
+  <label>Название игры <input id="q" list="names" placeholder="Hades" autocomplete="off" required></label>
+  <datalist id="names"></datalist>
   <label>Макс. цена, $ <input id="price" type="number" min="0" value="100"></label>
   <label>Мин. год <input id="year" type="number" min="1997" max="2025" value="1997"></label>
   <label>Результатов (5-20) <input id="k" type="number" min="5" max="20" value="10"></label>
@@ -33,6 +34,22 @@
 <div class="grid" id="out"></div>
 <script>
 const $ = id => document.getElementById(id);
+// подсказки названий: запрос с задержкой, устаревшие ответы отбрасываем
+let timer, last = 0;
+$("q").addEventListener("input", () => {
+  clearTimeout(timer);
+  const text = $("q").value;
+  timer = setTimeout(async () => {
+    const id = ++last;
+    try {
+      const r = await fetch("/api/suggest?q=" + encodeURIComponent(text));
+      if (!r.ok || id !== last) return;
+      const opts = (await r.json()).map(n => { const o = document.createElement("option"); o.value = n; return o; });
+      $("names").replaceChildren(...opts);
+    } catch (e) { /* подсказки необязательны */ }
+  }, 200);
+});
+
 $("f").addEventListener("submit", async e => {
   e.preventDefault();
   // пустые поля в запрос не передаём, сервер подставит значения по умолчанию
