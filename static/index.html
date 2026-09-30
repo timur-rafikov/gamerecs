@@ -35,8 +35,11 @@
 const $ = id => document.getElementById(id);
 $("f").addEventListener("submit", async e => {
   e.preventDefault();
-  const p = new URLSearchParams({q: $("q").value, max_price: $("price").value,
-                                 min_year: $("year").value, k: $("k").value});
+  // пустые поля в запрос не передаём, сервер подставит значения по умолчанию
+  const p = new URLSearchParams();
+  for (const [key, id] of [["q", "q"], ["max_price", "price"], ["min_year", "year"], ["k", "k"]]) {
+    if ($(id).value.trim() !== "") p.set(key, $(id).value);
+  }
   $("msg").textContent = "Ищу...";
   $("out").replaceChildren();
   try {
