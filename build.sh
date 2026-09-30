@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
-# Сборка для Render. annoy по умолчанию собирается с -march=native: на машине сборки это
+# Сборка для Render (LFS-файлы Render подтягивает сам при клонировании). annoy по умолчанию собирается с -march=native: на машине сборки это
 # одни инструкции, на рабочем инстансе другие, и процесс падает с SIGILL (код 132).
 # Поэтому собираем annoy из исходников с базовым x86-64.
 set -e
-git lfs pull
 pip install $(grep -v '^annoy' requirements.txt)
 
 pip uninstall -y annoy || true

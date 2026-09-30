@@ -38,7 +38,7 @@ API: `GET /api/recommend?q=Hades&max_price=30&min_year=2015&k=10`, провер�
 
 ## Деплой на Render
 Web Service из этого репозитория, настройки заданы в `render.yaml`:
-- Build Command: `bash build.sh` (git lfs pull, установка пакетов, сборка annoy без -march=native)
+- Build Command: `bash build.sh` (установка пакетов, сборка annoy без -march=native)
 - Start Command: `uvicorn app:app --host 0.0.0.0 --port $PORT`
 - Health Check Path: `/healthz`, переменная `PYTHON_VERSION=3.12.7`.
 
