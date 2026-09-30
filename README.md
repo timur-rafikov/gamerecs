@@ -43,11 +43,19 @@ uvicorn app:app --reload
 ```
 API: `GET /api/recommend?q=Hades&max_price=30&min_year=2015&k=10`, проверка: `GET /healthz`.
 
-## Деплой на Render
+## Деплой на Render (без Docker)
 Web Service из этого репозитория, настройки заданы в `render.yaml`:
 - Build Command: `bash build.sh` (установка пакетов, сборка annoy без -march=native)
 - Start Command: `uvicorn app:app --host 0.0.0.0 --port $PORT`
 - Health Check Path: `/healthz`, переменная `PYTHON_VERSION=3.12.7`.
+
+## Docker
+Образ не зависит от платформы: `annoy` собирается на отдельном этапе без `-march=native`, порт берётся из `$PORT` (по умолчанию 8000). Перед сборкой убедитесь, что `games.ann` скачан по-настоящему (`git lfs pull`), а не остался LFS-указателем.
+```bash
+docker build -t gamerec .
+docker run --rm -p 8000:8000 gamerec
+```
+Дальше открыть http://localhost:8000. Такой же образ подходит для Render (Docker runtime), Fly.io, Cloud Run или своего сервера.
 
 ## Пересборка артефактов
 Нужны `../gamerecfiles/games2.csv`, `../gamerecfiles/emb.npy`, `sentence-transformers`, `scikit-learn`. Из корня проекта:
