@@ -1,7 +1,9 @@
 # GameRec
 
 Content-based item2item рекомендательная система видеоигр Steam: по названию игры находит похожие.
-Веб-сервис на FastAPI, разворачивается на Render (Web Service).
+Веб-сервис на FastAPI: поиск по названию с подсказками, фильтры по цене и году, обложки и сходство в выдаче.
+
+**Демо:** https://gamerecs-o8un.onrender.com (бесплатный план Render, после простоя первый запрос может идти долго).
 
 ## Данные
 Kaggle: [fronkongames/steam-games-dataset](https://www.kaggle.com/datasets/fronkongames/steam-games-dataset).
@@ -34,20 +36,33 @@ Kaggle: [fronkongames/steam-games-dataset](https://www.kaggle.com/datasets/fronk
 - **Рекомендации:** гибрид текстового эмбеддинга и числовых признаков, поиск соседей через Annoy (angular, 30 деревьев).
 - **Хранение:** `meta.parquet` (метаданные игр), `games.ann` (индекс, 197 МБ) в Git LFS.
 - **Сервис:** FastAPI и uvicorn (`/api/recommend`, `/api/suggest`, `/healthz`), фронтенд на одной HTML-странице с чистым JS (fetch, `<datalist>` для подсказок), без фреймворков и сборки.
-- **Деплой:** GitHub, Render Web Service (бесплатный план), автодеплой при коммите. `annoy` собирается скриптом `build.sh` без `-march=native`.
+- **Деплой:** GitHub, Render Web Service (бесплатный план), автодеплой при коммите. Два способа сборки: `Dockerfile` (переносимый на другие платформы) или нативный Python через `build.sh`. В обоих `annoy` собирается без `-march=native`.
 
 ## Запуск локально
 ```bash
 pip install -r requirements.txt
 uvicorn app:app --reload
 ```
-API: `GET /api/recommend?q=Hades&max_price=30&min_year=2015&k=10`, проверка: `GET /healthz`.
+API:
+- `GET /api/recommend?q=Hades&max_price=30&min_year=2015&k=10`: рекомендации (`max_price`, `min_year` необязательны, `k` от 5 до 20);
+- `GET /api/suggest?q=had`: до 8 подсказок названий (от 2 символов);
+- `GET /healthz`: проверка работоспособности.
 
-## Деплой на Render (без Docker)
-Web Service из этого репозитория, настройки заданы в `render.yaml`:
-- Build Command: `bash build.sh` (установка пакетов, сборка annoy без -march=native)
+Локально нужен Python 3.10 или новее. `annoy` собирается из исходников, нужен компилятор C++. При запуске на Linux x86_64 прочитайте примечание про `-march=native` ниже.
+
+## Деплой на Render
+Сервис запущен как Web Service из этого репозитория. Есть два способа.
+
+**1. Docker runtime** (рекомендуется, переносится на другие платформы): в Settings сервиса Runtime = Docker, Build и Start Command не нужны, всё описано в `Dockerfile`. Health Check Path: `/healthz`.
+
+**2. Нативный Python:**
+- Build Command: `bash build.sh` (установка пакетов, сборка `annoy` без `-march=native`)
 - Start Command: `uvicorn app:app --host 0.0.0.0 --port $PORT`
 - Health Check Path: `/healthz`, переменная `PYTHON_VERSION=3.12.7`.
+
+`render.yaml` описывает нативный вариант. Файл `games.ann` хранится в Git LFS, Render подтягивает его при клонировании.
+
+**Важно про `annoy`.** По умолчанию он собирается с `-march=native`, то есть под процессор машины сборки. Если сервис работает на другой машине, процесс падает с кодом 132 (SIGILL) на первом поиске. Поэтому и `build.sh`, и `Dockerfile` заменяют флаг на `-march=x86-64`.
 
 ## Docker
 Образ не зависит от платформы: `annoy` собирается на отдельном этапе без `-march=native`, порт берётся из `$PORT` (по умолчанию 8000). Перед сборкой убедитесь, что `games.ann` скачан по-настоящему (`git lfs pull`), а не остался LFS-указателем.
@@ -55,7 +70,7 @@ Web Service из этого репозитория, настройки зада�
 docker build -t gamerec .
 docker run --rm -p 8000:8000 gamerec
 ```
-Дальше открыть http://localhost:8000. Такой же образ подходит для Render (Docker runtime), Fly.io, Cloud Run или своего сервера.
+Дальше открыть http://localhost:8000. Такой же образ подходит для Render (Docker runtime), Fly.io, Cloud Run или своего сервера. Образ проверен локально на arm64 и amd64 (через эмуляцию).
 
 ## Пересборка артефактов
 Нужны `../gamerecfiles/games2.csv`, `../gamerecfiles/emb.npy`, `sentence-transformers`, `scikit-learn`. Из корня проекта:
