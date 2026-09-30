@@ -1,0 +1,30 @@
+{
+  "только текст": {
+    "jaccard_tags": 0.2688,
+    "jaccard_categories": 0.4944
+  },
+  "только числа": {
+    "jaccard_tags": 0.1291,
+    "jaccard_categories": 0.4657
+  },
+  "гибрид w_num=0.05": {
+    "jaccard_tags": 0.2691,
+    "jaccard_categories": 0.4959
+  },
+  "гибрид w_num=0.1": {
+    "jaccard_tags": 0.2712,
+    "jaccard_categories": 0.4995
+  },
+  "гибрид w_num=0.2": {
+    "jaccard_tags": 0.2764,
+    "jaccard_categories": 0.51
+  },
+  "гибрид w_num=0.3": {
+    "jaccard_tags": 0.2804,
+    "jaccard_categories": 0.5218
+  },
+  "гибрид w_num=0.5": {
+    "jaccard_tags": 0.2784,
+    "jaccard_categories": 0.5305
+  }
+}

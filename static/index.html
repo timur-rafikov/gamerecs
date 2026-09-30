@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GameRec</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 980px; margin: 0 auto; padding: 16px; }
+  form { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
+  label { display: flex; flex-direction: column; font-size: 14px; gap: 4px; }
+  input { padding: 6px; }
+  #q { min-width: 260px; }
+  button { padding: 8px 16px; }
+  #msg { margin: 16px 0; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+  .card { border: 1px solid #8884; border-radius: 8px; overflow: hidden; font-size: 14px; }
+  .card img { width: 100%; display: block; }
+  .card div { padding: 8px; }
+  .sim { color: #666; }
+</style>
+</head>
+<body>
+<h1>GameRec</h1>
+<p>Похожие игры Steam (content-based item2item).</p>
+<form id="f">
+  <label>Название игры <input id="q" placeholder="Hades" required></label>
+  <label>Макс. цена, $ <input id="price" type="number" min="0" value="100"></label>
+  <label>Мин. год <input id="year" type="number" min="1997" max="2025" value="1997"></label>
+  <label>Результатов (5-20) <input id="k" type="number" min="5" max="20" value="10"></label>
+  <button>Найти</button>
+</form>
+<div id="msg"></div>
+<div class="grid" id="out"></div>
+<script>
+const $ = id => document.getElementById(id);
+$("f").addEventListener("submit", async e => {
+  e.preventDefault();
+  const p = new URLSearchParams({q: $("q").value, max_price: $("price").value,
+                                 min_year: $("year").value, k: $("k").value});
+  $("msg").textContent = "Ищу...";
+  $("out").replaceChildren();
+  try {
+    const r = await fetch("/api/recommend?" + p);
+    if (!r.ok) throw new Error(r.status);
+    const data = await r.json();
+    $("msg").textContent = data.message;
+    for (const g of data.results) {
+      const c = document.createElement("div"); c.className = "card";
+      if (g.image) { const im = document.createElement("img"); im.src = g.image; im.loading = "lazy"; im.alt = g.name; c.append(im); }
+      const t = document.createElement("div");
+      const b = document.createElement("b"); b.textContent = g.name;
+      const m = document.createElement("div"); m.className = "sim";
+      m.textContent = `${g.genres} · $${g.price} · ${g.year ?? "?"} · сходство ${g.sim}`;
+      t.append(b, m); c.append(t); $("out").append(c);
+    }
+  } catch (err) { $("msg").textContent = "Ошибка запроса: " + err.message; }
+});
+</script>
+</body>
+</html>
