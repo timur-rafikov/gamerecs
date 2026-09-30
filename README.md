@@ -29,6 +29,13 @@ Kaggle: [fronkongames/steam-games-dataset](https://www.kaggle.com/datasets/fronk
 | гибрид w_num=0.3 | 0.2804 | 0.5218 |
 | гибрид w_num=0.5 | 0.2784 | 0.5305 |
 
+## Стек
+- **Данные и подготовка:** Python 3.12, pandas, numpy, scikit-learn (StandardScaler, нормировка), pyarrow. Эмбеддинги текстов: sentence-transformers, модель `intfloat/multilingual-e5-base` (используется только при подготовке данных).
+- **Рекомендации:** гибрид текстового эмбеддинга и числовых признаков, поиск соседей через Annoy (angular, 30 деревьев).
+- **Хранение:** `meta.parquet` (метаданные игр), `games.ann` (индекс, 197 МБ) в Git LFS.
+- **Сервис:** FastAPI и uvicorn (`/api/recommend`, `/api/suggest`, `/healthz`), фронтенд на одной HTML-странице с чистым JS (fetch, `<datalist>` для подсказок), без фреймворков и сборки.
+- **Деплой:** GitHub, Render Web Service (бесплатный план), автодеплой при коммите. `annoy` собирается скриптом `build.sh` без `-march=native`.
+
 ## Запуск локально
 ```bash
 pip install -r requirements.txt
